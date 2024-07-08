@@ -1,0 +1,43 @@
+type Customers {
+    customerId: ID!
+    customerName: String
+    customerAddress: String
+    customerCode: String
+    customerPhone: String
+    isActive: Boolean
+    lastOrderDate: String
+    pic: String
+    password: String
+    username: String
+}
+
+input RequestCustomerUpdate {
+    customerName: String
+    customerAddress: String
+    customerCode: String
+    customerPhone: String
+    pic: String
+}
+
+input RequestCustomerCreate {
+    customerName: String
+    customerAddress: String
+    customerCode: String
+    customerPhone: String
+    isActive: Boolean
+    lastOrderDate: String
+    pic: String
+    password: String
+    username: String
+}
+
+type Query {
+    getAllCustomer(name: String, isActive: Boolean, page: Int, size: Int): [Customers]
+    getCustomerById(customerId: ID!) : Customers
+}
+
+type Mutation {
+    updateCustomer(id: String!, updateCustomer: RequestCustomerUpdate): Customers
+    createCustomer(createCustomer: RequestCustomerCreate): Customers
+    deleteCustomer(id: String!): Boolean
+}
