@@ -3,7 +3,7 @@ type Items {
     itemId: ID!
     itemName: String
     itemDescription: String
-    itemPrice: Float
+    itemPrice: Int
     itemStock: Int
     isAvailable: Boolean
 }

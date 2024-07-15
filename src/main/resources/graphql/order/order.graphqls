@@ -3,10 +3,10 @@ type Orders {
     orderId: ID!
     orderCode: String
     orderDate: String
-    totalPrice: Float
+    totalPrice: Int
+    quantity: Int
     customers: Customers
     items: Items
-    quantity: Int
 }
 
 # RESPONSE
@@ -22,17 +22,12 @@ type ResponseOrder {
 
 # INPUT
 input RequestOrderCreate {
-    orderCode: String!
-    orderDate: String!
-    totalPrice: Float!
     customerId: ID!
     itemId: ID!
     quantity: Int!
 }
 
 input RequestOrderUpdate {
-    orderCode: String
-    orderDate: String
-    totalPrice: Float
     quantity: Int
+    itemId: Int
 }

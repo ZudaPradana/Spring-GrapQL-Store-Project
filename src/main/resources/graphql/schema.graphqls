@@ -16,8 +16,8 @@ type Query {
     getItem(itemId: ID!): ResponseItem
 
     # order queries
-    getAllOrders(page: Int, size: Int): ResponseOrders
-    getOrderById(orderId: ID!): ResponseOrder
+    getAllOrder(customerName: String, itemName: String, page: Int, size: Int): ResponseOrders
+    getOrder(orderId: ID!): ResponseOrder
 }
 
 type Mutation {
@@ -27,12 +27,12 @@ type Mutation {
     deleteCustomer(id: String!): ResponHeader
 
     # item mutations
-    updateItem(id: String!, updateItem: RequestItemCreateUpdate): ResponHeader
+    updateItem(id: ID!, updateItem: RequestItemCreateUpdate): ResponHeader
     createItem(createItem: RequestItemCreateUpdate): ResponHeader
-    deleteItem(id: String!): ResponHeader
+    deleteItem(id: ID!): ResponHeader
 
     # order mutations
-    updateOrder(id: String!, updateOrder: RequestOrderUpdate): ResponHeader
+    updateOrder(id: ID!, updateOrder: RequestOrderUpdate): ResponHeader
     createOrder(createOrder: RequestOrderCreate): ResponHeader
-    deleteOrder(id: String!): ResponHeader
+    deleteOrder(id: ID!): ResponHeader
 }
