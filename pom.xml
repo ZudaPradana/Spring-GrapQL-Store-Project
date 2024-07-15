@@ -11,8 +11,8 @@
     <groupId>org.zydd</groupId>
     <artifactId>be-btpn</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>be--btpn</name>
-    <description>be--btpn</description>
+    <name>simple-store</name>
+    <description>simple-store self project</description>
     <url/>
     <licenses>
         <license/>
@@ -37,6 +37,17 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.minio/minio -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
