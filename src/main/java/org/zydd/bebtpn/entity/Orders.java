@@ -3,7 +3,6 @@ package org.zydd.bebtpn.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,7 +19,7 @@ public class Orders {
 
     private String orderCode;
     private LocalDateTime orderDate;
-    private BigDecimal totalPrice;
+    private Long totalPrice;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customers customers;
