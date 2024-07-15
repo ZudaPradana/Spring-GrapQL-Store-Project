@@ -1,57 +1,69 @@
 package org.zydd.bebtpn.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.zydd.bebtpn.dto.RequestCustomerCreate;
-import org.zydd.bebtpn.dto.RequestCustomerUpdate;
+import org.zydd.bebtpn.dto.*;
 import org.zydd.bebtpn.entity.Customers;
 import org.zydd.bebtpn.repository.CustomerRepository;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.Optional;
 
 @Service
 public class CustomerService {
+    private final MinioService minioService;
     private final CustomerRepository repository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-    @Value("${spring.servlet.multipart.location}")
-    private String photoLocation;
 
     @Autowired
-    public CustomerService(CustomerRepository repository) {
+    public CustomerService(MinioService minioService, CustomerRepository repository) {
+        this.minioService = minioService;
         this.repository = repository;
     }
 
-    public Page<Customers> getAllCustomers(String name, Boolean isActive, int page, int size) {
-        Pageable pageable = PageRequest.of(page-1, size);
+    public ResponGetAllData<Customers> getAllCustomers(String name, Boolean isActive, int page, int size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Customers> customerPage;
 
         if (name != null && isActive != null) {
-            return repository.findByCustomerNameContainingIgnoreCaseAndIsActive(name, isActive, pageable);
+            customerPage = repository.findByCustomerNameContainingIgnoreCaseAndIsActive(name, isActive, pageable);
         } else if (name != null) {
-            return repository.findByCustomerNameContainingIgnoreCase(name, pageable);
+            customerPage = repository.findByCustomerNameContainingIgnoreCase(name, pageable);
         } else if (isActive != null) {
-            return repository.findByIsActive(isActive, pageable);
+            customerPage = repository.findByIsActive(isActive, pageable);
         } else {
-            return repository.findAll(pageable);
+            customerPage = repository.findAll(pageable);
         }
+
+        ResponHeader header = ResponHeaderMessage.getRequestSuccess();
+
+        return new ResponGetAllData<>(header, customerPage.getContent());
     }
 
-    public Customers getCustomerById(String id) {
+
+    public ResponGetData getCustomerById(String id) {
         Long customerId = Long.parseLong(id);
-        Customers customerExisting =  repository.findById(customerId).orElseThrow(() -> new RuntimeException("Customer not found"));
-        customerExisting.setPic(photoLocation+"/"+customerExisting.getPic());
-        return customerExisting;
+        Optional<Customers> customerExisting = repository.findById(customerId);
+
+        if (customerExisting.isPresent()) {
+            Customers customer = customerExisting.get();
+            customer.setPic(minioService.getObjectUrl(customer.getUsername()));
+            ResponHeader header = ResponHeaderMessage.getRequestSuccess();
+            return new ResponGetData(header, customer);
+        }
+
+        ResponHeader header = ResponHeaderMessage.getDataNotFound();
+        return new ResponGetData(header, null);
     }
 
-    public Customers updateCustomer(String id, RequestCustomerUpdate request) {
+
+    @Transactional
+    public ResponHeader updateCustomer(String id, RequestCustomerUpdate request) {
         Long customerId = Long.parseLong(id);
         Customers existingCustomer = repository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
@@ -74,10 +86,14 @@ public class CustomerService {
         }
 
         // Save the updated customer
-        return repository.save(existingCustomer);
+        repository.save(existingCustomer);
+        ResponHeader header = ResponHeaderMessage.getRequestSuccess();
+        header.setMessage("Customer updated successfully");
+        return header;
     }
 
-    public Customers createCustomer(RequestCustomerCreate request) {
+    @Transactional
+    public ResponHeader createCustomer(RequestCustomerCreate request) {
         // Hash password using BCryptPasswordEncoder
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         Customers customer = Customers
@@ -99,30 +115,39 @@ public class CustomerService {
                 byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
 
                 // Generate file name (or use a UUID)
-                String fileName = request.getCustomerCode() + "_" + request.getCustomerName() + ".jpg";
+                String fileName = request.getCustomerCode() + "_" + request.getUsername() + ".jpg";
 
-                // Specify the file path
-                Path path = Paths.get("src/main/resources/photo/" + fileName);
+                // Upload to MinIO
+                minioService.uploadFile(fileName, decodedBytes);
 
-                // Write the decoded bytes to file
-                Files.write(path, decodedBytes);
-
+                // Set the file name to the customer entity
                 customer.setPic(fileName);
 
-            } catch (IOException e) {
-                e.printStackTrace();
-                // Handle exception if unable to save file
+            } catch (Exception e) {
+                ResponHeader header = ResponHeaderMessage.getBadRequestError();
+                header.setMessage(e.getMessage());
+                return header;
             }
         }
-
-        return repository.save(customer);
+        repository.save(customer);
+        ResponHeader header = ResponHeaderMessage.getRequestSuccess();
+        header.setMessage("Customer created successfully");
+        return header;
     }
 
-    public void deleteCustomer(String id) {
+    @Transactional
+    public ResponHeader deleteCustomer(String id) {
         Long customerId = Long.parseLong(id);
-        Customers customer = repository.findById(customerId)
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-        repository.delete(customer);
+        Optional<Customers> customer = repository.findById(customerId);
+        if (customer.isPresent()) {
+            Customers deleteCustomer = customer.get();
+            repository.delete(deleteCustomer);
+            ResponHeader header = ResponHeaderMessage.getRequestSuccess();
+            header.setMessage("Customer deleted successfully");
+            return header;
+        }
+
+        return ResponHeaderMessage.getDataNotFound();
     }
 }
 
