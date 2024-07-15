@@ -1,0 +1,28 @@
+# ENTITY
+type Items {
+    itemId: ID!
+    itemName: String
+    itemDescription: String
+    itemPrice: Float
+    itemStock: Int
+    isAvailable: Boolean
+}
+
+# INPUT
+input RequestItemCreateUpdate {
+    itemName: String!
+    itemDescription: String
+    itemPrice: Int!
+    itemStock: Int!
+}
+
+# RESPONSE
+type ResponseItems {
+    header: ResponHeader
+    data: [Items]
+}
+
+type ResponseItem {
+    header: ResponHeader
+    data: Items
+}

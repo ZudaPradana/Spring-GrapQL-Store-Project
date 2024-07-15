@@ -1,17 +1,3 @@
-
-# QUERY & MUTATION
-type Query {
-    getAllCustomer(name: String, isActive: Boolean, page: Int, size: Int): ResponGetAllData
-    getCustomerById(customerId: ID!) : ResponGetData
-}
-
-type Mutation {
-    updateCustomer(id: String!, updateCustomer: RequestCustomerUpdate): ResponHeader
-    createCustomer(createCustomer: RequestCustomerCreate): ResponHeader
-    deleteCustomer(id: String!): ResponHeader
-}
-
-
 # ENTITY
 type Customers {
     customerId: ID!
@@ -48,22 +34,15 @@ input RequestCustomerCreate {
     pic: String
 }
 
-
-
 # RESPONSE
-type ResponGetAllData{
+type ResponseCustomers{
     header : ResponHeader
     data : [Customers]
 }
 
-type ResponHeader {
-    code : String
-    status : Boolean
-    message : String
-}
-
-type ResponGetData{
+type ResponseCustomer{
 header : ResponHeader
 data : Customers
 }
+
 

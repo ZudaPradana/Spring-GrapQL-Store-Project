@@ -1,0 +1,38 @@
+# ENTITY
+type Orders {
+    orderId: ID!
+    orderCode: String
+    orderDate: String
+    totalPrice: Float
+    customers: Customers
+    items: Items
+    quantity: Int
+}
+
+# RESPONSE
+type ResponseOrders {
+    header: ResponHeader
+    data: [Orders]
+}
+
+type ResponseOrder {
+    header: ResponHeader
+    data: Orders
+}
+
+# INPUT
+input RequestOrderCreate {
+    orderCode: String!
+    orderDate: String!
+    totalPrice: Float!
+    customerId: ID!
+    itemId: ID!
+    quantity: Int!
+}
+
+input RequestOrderUpdate {
+    orderCode: String
+    orderDate: String
+    totalPrice: Float
+    quantity: Int
+}

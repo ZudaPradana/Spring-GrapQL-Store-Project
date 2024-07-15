@@ -1,0 +1,38 @@
+# HEADER
+type ResponHeader {
+    code: String
+    status: Boolean
+    message: String
+}
+
+# QUERY & MUTATION
+type Query {
+    # customer queries
+    getAllCustomer(name: String, isActive: Boolean, page: Int, size: Int): ResponseCustomers
+    getCustomerById(customerId: ID!): ResponseCustomer
+
+    # item queries
+    getAllItem(itemName: String, isAvailable: Boolean, minPrice: Float, maxPrice: Float, page : Int, size : Int): ResponseItems
+    getItem(itemId: ID!): ResponseItem
+
+    # order queries
+    getAllOrders(page: Int, size: Int): ResponseOrders
+    getOrderById(orderId: ID!): ResponseOrder
+}
+
+type Mutation {
+    # customer mutations
+    updateCustomer(id: String!, updateCustomer: RequestCustomerUpdate): ResponHeader
+    createCustomer(createCustomer: RequestCustomerCreate): ResponHeader
+    deleteCustomer(id: String!): ResponHeader
+
+    # item mutations
+    updateItem(id: String!, updateItem: RequestItemCreateUpdate): ResponHeader
+    createItem(createItem: RequestItemCreateUpdate): ResponHeader
+    deleteItem(id: String!): ResponHeader
+
+    # order mutations
+    updateOrder(id: String!, updateOrder: RequestOrderUpdate): ResponHeader
+    createOrder(createOrder: RequestOrderCreate): ResponHeader
+    deleteOrder(id: String!): ResponHeader
+}
