@@ -64,6 +64,22 @@ public class MinioService {
         }
     }
 
+    public void deleteFile(String fileName) {
+        try {
+            // Delete file from MinIO bucket
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+        } catch (Exception e) {
+            // Handle exception
+            ResponHeader header = ResponHeaderMessage.getBadRequestError();
+            header.setMessage("Error while deleting file" + e.getMessage());
+        }
+    }
+
     public String getObjectUrl(String objectName) {
         return endpoint + "/" + bucketName + "/" + objectName;
     }
