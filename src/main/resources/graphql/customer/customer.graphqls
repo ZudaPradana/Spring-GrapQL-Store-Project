@@ -8,30 +8,16 @@ type Customers {
     isActive: Boolean
     lastOrderDate: String
     pic: String
-    password : String
-    username: String
 }
 
 
 # INPUT
-input RequestCustomerUpdate {
-    customerName: String
-    customerAddress: String
-    customerCode: String
-    customerPhone: String
-    pic: String
-}
-
-input RequestCustomerCreate {
-    username: String!
-    password: String!
+input RequestCustomerUpdateCreate {
     customerName: String!
     customerAddress: String
-    customerCode: String
     customerPhone: String
-    isActive: Boolean
-    lastOrderDate: String
     pic: String
+    isActive : Boolean!
 }
 
 # RESPONSE

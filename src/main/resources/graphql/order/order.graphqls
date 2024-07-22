@@ -28,6 +28,6 @@ input RequestOrderCreate {
 }
 
 input RequestOrderUpdate {
-    quantity: Int
-    itemId: Int
+    quantity: Int!
+    itemId: Int!
 }

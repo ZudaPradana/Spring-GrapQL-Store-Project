@@ -3,17 +3,18 @@ type Items {
     itemId: ID!
     itemName: String
     itemDescription: String
-    itemPrice: Int
-    itemStock: Int
+    price: Float
+    stock: Int
     isAvailable: Boolean
+    lastRestock: String
 }
 
 # INPUT
 input RequestItemCreateUpdate {
     itemName: String!
     itemDescription: String
-    itemPrice: Int!
-    itemStock: Int!
+    price: Int!
+    stock: Int!
 }
 
 # RESPONSE

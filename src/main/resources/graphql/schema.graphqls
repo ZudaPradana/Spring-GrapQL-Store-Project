@@ -12,7 +12,7 @@ type Query {
     getCustomerById(customerId: ID!): ResponseCustomer
 
     # item queries
-    getAllItem(itemName: String, isAvailable: Boolean, minPrice: Float, maxPrice: Float, page : Int, size : Int): ResponseItems
+    getAllItem(itemName: String, isAvailable: Boolean, page : Int, size : Int): ResponseItems
     getItem(itemId: ID!): ResponseItem
 
     # order queries
@@ -22,8 +22,8 @@ type Query {
 
 type Mutation {
     # customer mutations
-    updateCustomer(id: String!, updateCustomer: RequestCustomerUpdate): ResponHeader
-    createCustomer(createCustomer: RequestCustomerCreate): ResponHeader
+    updateCustomer(id: String!, updateCustomer: RequestCustomerUpdateCreate): ResponHeader
+    createCustomer(createCustomer: RequestCustomerUpdateCreate): ResponHeader
     deleteCustomer(id: String!): ResponHeader
 
     # item mutations
