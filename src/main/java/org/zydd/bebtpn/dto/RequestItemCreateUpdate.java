@@ -10,6 +10,6 @@ import lombok.Setter;
 public class RequestItemCreateUpdate {
     private String itemName;
     private String itemDescription;
-    private Long itemPrice;
-    private Integer itemStock;
+    private Long price;
+    private Long stock;
 }
