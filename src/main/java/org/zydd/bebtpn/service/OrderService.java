@@ -1,6 +1,7 @@
 package org.zydd.bebtpn.service;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
@@ -41,7 +43,7 @@ public class OrderService {
         Items item = itemRepository.findById(itemIdLong)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
 
-        if (item.getStock() > request.getQuantity()) {
+        if (item.getStock() >= request.getQuantity()) {
             Orders newOrder = Orders
                     .builder()
                     .orderDate(LocalDateTime.now())
@@ -52,7 +54,8 @@ public class OrderService {
                     .items(item)
                     .build();
             orderRepository.save(newOrder);
-
+            customer.setLastOrderDate(LocalDateTime.now());
+            item.updateStock(request.getQuantity());
             ResponHeader header = ResponHeaderMessage.getDataCreated();
             header.setMessage("Order created successfully");
             return header;
@@ -98,19 +101,15 @@ public class OrderService {
         return new ResponGetData<>(header, null);
     }
 
-    public ResponHeader deleteOrder(String orderId){
+    @Transactional
+    public ResponHeader deleteOrder(String orderId) {
         Long id = Long.parseLong(orderId);
-        Optional<Orders> order = orderRepository.findById(id);
-        if (order.isPresent()) {
-            Orders orderData = order.get();
-            orderRepository.delete(orderData);
-            ResponHeader header = ResponHeaderMessage.getRequestSuccess();
-            header.setMessage("Order deleted successfully");
-            return header;
+        Optional<Orders> existingItem = orderRepository.findById(id);
+        if (existingItem.isPresent()) {
+            orderRepository.delete(existingItem.get());
+            return ResponHeaderMessage.getRequestSuccess();
         }
-        ResponHeader header = ResponHeaderMessage.getDataNotFound();
-        header.setMessage("Order not found");
-        return header;
+        return ResponHeaderMessage.getBadRequestError();
     }
 
     @Transactional
@@ -119,14 +118,19 @@ public class OrderService {
         Orders order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        if (request.getItemId() != null) {
             Items item = itemRepository.findById(request.getItemId())
                     .orElseThrow(() -> new RuntimeException("Item not found"));
+        if (request.getItemId() != null) {
             order.setItems(item);
             order.setTotalPrice(totalAmount(order.getQuantity(), item.getPrice()));
         }
 
         if (request.getQuantity() != null) {
+            if (request.getQuantity() > order.getQuantity()) {
+                item.setStock(item.getStock() + (order.getQuantity() - request.getQuantity()));
+            } else {
+                item.setStock(item.getStock() - (request.getQuantity() - order.getQuantity()));
+            }
             order.setQuantity(request.getQuantity());
             order.setTotalPrice(totalAmount(request.getQuantity(), order.getItems().getPrice()));
         }
