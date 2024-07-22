@@ -10,37 +10,27 @@ import org.zydd.bebtpn.dto.*;
 import org.zydd.bebtpn.entity.Items;
 import org.zydd.bebtpn.repository.ItemRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
 public class ItemService {
-    ItemRepository itemRepository;
+    private final ItemRepository itemRepository;
 
     @Autowired
     public ItemService(ItemRepository itemRepository) {
         this.itemRepository = itemRepository;
     }
 
-    public ResponGetAllData<Items> getAllData(String itemName, Boolean isAvailable, Float minPrice, Float maxPrice, int page, int size){
+    public ResponGetAllData<Items> getAllData(String itemName, Boolean isAvailable, int page, int size){
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Items> itemsPage;
-        if (itemName != null && isAvailable != null && minPrice != null && maxPrice != null) {
-            itemsPage = itemRepository.findByItemNameContainingIgnoreCaseAndIsAvailableAndPriceGreaterThanEqualAndPriceLessThanEqual(
-                    itemName, isAvailable, minPrice, maxPrice, pageable);
-        } else if (itemName != null && isAvailable != null) {
+        if (itemName != null && isAvailable != null) {
             itemsPage = itemRepository.findByItemNameContainingIgnoreCaseAndIsAvailable(itemName, isAvailable, pageable);
-        } else if (itemName != null && minPrice != null && maxPrice != null) {
-            itemsPage = itemRepository.findByItemNameContainingIgnoreCaseAndPriceGreaterThanEqualAndPriceLessThanEqual(
-                    itemName, minPrice, maxPrice, pageable);
-        } else if (isAvailable != null && minPrice != null && maxPrice != null) {
-            itemsPage = itemRepository.findByIsAvailableAndPriceGreaterThanEqualAndPriceLessThanEqual(
-                    isAvailable, minPrice, maxPrice, pageable);
         } else if (itemName != null) {
             itemsPage = itemRepository.findByItemNameContainingIgnoreCase(itemName, pageable);
         } else if (isAvailable != null) {
             itemsPage = itemRepository.findByIsAvailable(isAvailable, pageable);
-        } else if (minPrice != null && maxPrice != null) {
-            itemsPage = itemRepository.findByPriceGreaterThanEqualAndPriceLessThanEqual(minPrice, maxPrice, pageable);
         } else {
             itemsPage = itemRepository.findAll(pageable); // Fallback to all items
         }
@@ -65,45 +55,56 @@ public class ItemService {
 
     @Transactional
     public ResponHeader createItem(RequestItemCreateUpdate request) {
+        ResponHeader header;
         try {
             Items newItem = new Items(
                     request.getItemName(),
                     request.getItemDescription(),
-                    request.getItemStock(),
-                    request.getItemPrice()
+                    request.getStock() != null ? request.getStock() : 0,
+                    request.getPrice() != null ? request.getPrice() : 0
             );
             itemRepository.save(newItem);
-        }catch (Exception e) {
-            ResponHeader header = ResponHeaderMessage.getBadRequestError();
+            header = ResponHeaderMessage.getRequestSuccess();
+            header.setMessage("Success Create Item");
+        } catch (Exception e) {
+            header = ResponHeaderMessage.getBadRequestError();
             header.setMessage(e.getMessage());
         }
-        ResponHeader header = ResponHeaderMessage.getRequestSuccess();
-        header.setMessage("Success Create Item");
         return header;
     }
 
     @Transactional
-    public ResponHeader updateItem(String itemId ,RequestItemCreateUpdate request){
+    public ResponHeader updateItem(String itemId ,RequestItemCreateUpdate request) {
         Long id = Long.parseLong(itemId);
         Optional<Items> existingItem = itemRepository.findById(id);
+
         if (existingItem.isPresent()) {
             Items item = existingItem.get();
+
             if (request.getItemName() != null) {
                 item.setItemName(request.getItemName());
-            } else if (request.getItemStock() != null) {
-                item.setStock(request.getItemStock());
-            } else if (request.getItemPrice() != null) {
-                item.setPrice(request.getItemPrice());
-            } else if (request.getItemDescription() != null) {
+            }
+            if (request.getStock() != null) {
+                item.setStock(request.getStock());
+                item.setLastRestock(LocalDateTime.now());
+            }
+            if (request.getPrice() != null) {
+                item.setPrice(request.getPrice());
+            }
+            if (request.getItemDescription() != null) {
                 item.setItemDescription(request.getItemDescription());
             }
+
             itemRepository.save(item);
+
             ResponHeader header = ResponHeaderMessage.getRequestSuccess();
             header.setMessage("Success Update Item");
             return header;
         }
+
         return ResponHeaderMessage.getBadRequestError();
     }
+
 
     @Transactional
     public ResponHeader deleteItem(String itemId) {

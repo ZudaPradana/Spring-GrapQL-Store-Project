@@ -21,8 +21,8 @@ public class ItemController {
     }
 
     @QueryMapping
-    public ResponGetAllData<?> getAllItem(@Argument String itemName, @Argument Boolean isAvailable,@Argument Float minPrice,@Argument Float maxPrice,@Argument int page,@Argument int size) {
-        return itemService.getAllData(itemName, isAvailable, minPrice, maxPrice, page, size);
+    public ResponGetAllData<?> getAllItem(@Argument String itemName, @Argument Boolean isAvailable,@Argument int page,@Argument int size) {
+        return itemService.getAllData(itemName, isAvailable, page, size);
     }
 
     @QueryMapping

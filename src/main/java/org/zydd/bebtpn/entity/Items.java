@@ -3,7 +3,6 @@ package org.zydd.bebtpn.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -23,14 +22,14 @@ public class Items {
     private String itemName;
     private String itemCode;
     private String itemDescription;
-    private Integer stock;
+    private Long stock;
     private Long price;
     private Boolean isAvailable;
     private LocalDateTime lastRestock;
     @OneToMany(mappedBy = "items", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Orders> orders;
 
-    public Items(String itemName, String itemDescription, Integer stock, Long price) {
+    public Items(String itemName, String itemDescription, Long stock, Long price) {
         this.itemName = itemName;
         this.itemCode = generateItemCode();
         this.itemDescription = itemDescription;
@@ -39,12 +38,21 @@ public class Items {
         this.isAvailable = itemAvailable(stock);
     }
 
-    public void setStock(Integer stock) {
+    public void setStock(Long stock) {
         this.stock = stock;
         this.isAvailable = stock > 0;
+        this.lastRestock = LocalDateTime.now();
     }
 
-    private Boolean itemAvailable(Integer Stock){
+    public void updateStock(Long stock) {
+        this.stock = this.stock - stock;
+        this.lastRestock = LocalDateTime.now();
+        if (this.stock == 0) {
+            this.isAvailable = itemAvailable(this.stock);
+        }
+    }
+
+    private Boolean itemAvailable(Long Stock){
         this.stock = Stock;
         this.isAvailable = stock > 0;
         return isAvailable;
