@@ -2,10 +2,10 @@ package org.zydd.bebtpn.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.zydd.bebtpn.dto.*;
 import org.zydd.bebtpn.entity.Customers;
@@ -13,12 +13,12 @@ import org.zydd.bebtpn.repository.CustomerRepository;
 
 import java.util.Base64;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CustomerService {
     private final MinioService minioService;
     private final CustomerRepository repository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
     public CustomerService(MinioService minioService, CustomerRepository repository) {
@@ -52,7 +52,7 @@ public class CustomerService {
 
         if (customerExisting.isPresent()) {
             Customers customer = customerExisting.get();
-            customer.setPic(minioService.getObjectUrl(customer.getUsername()));
+            customer.setPic(minioService.getObjectUrl(customer.getPic()));
             ResponHeader header = ResponHeaderMessage.getRequestSuccess();
             return new ResponGetData(header, customer);
         }
@@ -63,7 +63,7 @@ public class CustomerService {
 
 
     @Transactional
-    public ResponHeader updateCustomer(String id, RequestCustomerUpdate request) {
+    public ResponHeader updateCustomer(String id, RequestCustomerCreateUpdate request) {
         Long customerId = Long.parseLong(id);
         Customers existingCustomer = repository.findById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
@@ -74,9 +74,6 @@ public class CustomerService {
         }
         if (request.getCustomerAddress() != null) {
             existingCustomer.setCustomerAddress(request.getCustomerAddress());
-        }
-        if (request.getCustomerCode() != null) {
-            existingCustomer.setCustomerCode(request.getCustomerCode());
         }
         if (request.getCustomerPhone() != null) {
             existingCustomer.setCustomerPhone(request.getCustomerPhone());
@@ -93,18 +90,15 @@ public class CustomerService {
     }
 
     @Transactional
-    public ResponHeader createCustomer(RequestCustomerCreate request) {
-        // Hash password using BCryptPasswordEncoder
-        String hashedPassword = passwordEncoder.encode(request.getPassword());
+    public ResponHeader createCustomer(RequestCustomerCreateUpdate request) {
         Customers customer = Customers
                 .builder()
                 .customerName(request.getCustomerName())
                 .customerPhone(request.getCustomerPhone())
-                .customerCode(hashedPassword)
                 .customerAddress(request.getCustomerAddress())
-                .username(request.getUsername())
-                .customerCode(request.getCustomerCode())
+                .isActive(request.getIsActive())
                 .build();
+        customer.setCustomerCode(UUID.randomUUID().toString().substring(0, 5));
         // Decode base64 image data if present
         if (request.getPic() != null) {
             try {
@@ -115,7 +109,7 @@ public class CustomerService {
                 byte[] decodedBytes = Base64.getDecoder().decode(base64Data);
 
                 // Generate file name (or use a UUID)
-                String fileName = request.getCustomerCode() + "_" + request.getUsername() + ".jpg";
+                String fileName = customer.getCustomerCode() + "_" + customer.getCustomerName() + ".jpg";
 
                 // Upload to MinIO
                 minioService.uploadFile(fileName, decodedBytes);
@@ -139,15 +133,33 @@ public class CustomerService {
     public ResponHeader deleteCustomer(String id) {
         Long customerId = Long.parseLong(id);
         Optional<Customers> customer = repository.findById(customerId);
+
         if (customer.isPresent()) {
             Customers deleteCustomer = customer.get();
-            repository.delete(deleteCustomer);
-            ResponHeader header = ResponHeaderMessage.getRequestSuccess();
-            header.setMessage("Customer deleted successfully");
-            return header;
+            try {
+                // Get the filename from the customer entity
+                String fileName = deleteCustomer.getPic();
+
+                // Delete the customer entity from the repository
+                repository.delete(deleteCustomer);
+
+                // Delete the file from MinIO bucket if the filename exists
+                if (fileName != null && !fileName.isEmpty()) {
+                    minioService.deleteFile(fileName);
+                }
+
+                ResponHeader header = ResponHeaderMessage.getRequestSuccess();
+                header.setMessage("Customer deleted successfully");
+                return header;
+            } catch (DataIntegrityViolationException e) {
+                // Handle exception
+                return null;
+            }
         }
 
         return ResponHeaderMessage.getDataNotFound();
     }
+
+
 }
 

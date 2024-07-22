@@ -17,12 +17,10 @@ public class CustomerController {
         this.service = service;
     }
 
-
     @QueryMapping
     public ResponGetAllData<?> getAllCustomer(@Argument String name, @Argument Boolean isActive, @Argument int page, @Argument int size) {
         return service.getAllCustomers(name, isActive, page, size);
     }
-
 
     @QueryMapping
     public ResponGetData getCustomerById(@Argument String customerId) {
@@ -30,12 +28,12 @@ public class CustomerController {
     }
 
     @MutationMapping
-    public ResponHeader updateCustomer(@Argument String id, @Argument("updateCustomer") RequestCustomerUpdate request) {
+    public ResponHeader updateCustomer(@Argument String id, @Argument("updateCustomer") RequestCustomerCreateUpdate request) {
         return service.updateCustomer(id, request);
     }
 
     @MutationMapping
-    public ResponHeader createCustomer(@Argument("createCustomer") RequestCustomerCreate request) {
+    public ResponHeader createCustomer(@Argument("createCustomer") RequestCustomerCreateUpdate request) {
         return service.createCustomer(request);
     }
 
